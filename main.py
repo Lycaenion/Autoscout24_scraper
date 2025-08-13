@@ -1,4 +1,5 @@
 import pickle
+import time
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -19,15 +20,34 @@ def load_cookies(driver,filename):
             driver.add_cookie(cookie)
         print("Cookies loaded")
 
-def scrape():
+def main():
     driver = webdriver.Chrome()
     driver.get(AUTOSCOUT24_URL)
-    #save_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
     driver.implicitly_wait(20)
     driver.find_element(By.XPATH, '//*[@id="as24-cmp-popup"]/div/div[3]/button[2]').click()
+    #save_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
     load_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
     driver.refresh()
+    scrape_autoscout(driver)
+
+
+def scrape_autoscout(driver):
+    base_window = driver.window_handles[0]
+
+    items = driver.find_elements(By.CSS_SELECTOR, 'article')
+    print(len(items))
+
+    links = []
+    for item in items:
+        links.append(item.find_element(By.CSS_SELECTOR, 'a').get_attribute('href'))
+
+    for link in links:
+        print(link)
+
+
+
+
 
 
 if __name__ == "__main__":
-    scrape()
+    main()
