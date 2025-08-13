@@ -52,7 +52,32 @@ def scrape_autoscout(driver):
 
         title_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
         title = title_element.text
-        print(title)
+
+        model_ver_element = driver.find_element(By.CLASS_NAME, 'StageTitle_modelVersion__Yof2Z')
+        model_ver = model_ver_element.text
+
+        price_element = driver.find_element(By.CLASS_NAME, 'PriceInfo_price__XU0aF')
+        price = price_element.text
+
+        year_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]')
+        year = year_element.text
+
+        location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
+        location = location_element.text
+
+        fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
+        fuel = fuel_element.text
+
+        power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
+        power = power_element.text
+
+        gearbox_element = driver.find_element(By.XPATH, '//*[@id="__next"]/div/div/main/div[3]/div[3]/div/div[2]/div[4]')
+        gearbox = gearbox_element.text
+
+        milage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
+        milage = milage_element.text
+
+        print(title + ' ' + model_ver + ' ' + price + ' ' + year + ' ' + location + ' ' + milage + ' ' + fuel + ' ' + power + ' ' + gearbox)
         driver.close()
     driver.switch_to.window(base_window)
 
