@@ -48,7 +48,11 @@ def scrape_autoscout(driver):
     for i, link in enumerate(links):
         windows = driver.window_handles
         driver.switch_to.window(windows[-1])
-        time.sleep(2)
+        time.sleep(10)
+
+        title_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
+        title = title_element.text
+        print(title)
         driver.close()
     driver.switch_to.window(base_window)
 
