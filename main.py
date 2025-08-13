@@ -41,8 +41,9 @@ def scrape_autoscout(driver):
     for item in items:
         links.append(item.find_element(By.CSS_SELECTOR, 'a').get_attribute('href'))
 
-    for link in links:
-        print(link)
+    for href in links:
+        driver.execute_script("window.open('{}');".format(href))
+        time.sleep(1)
 
 
 
