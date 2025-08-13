@@ -45,6 +45,13 @@ def scrape_autoscout(driver):
         driver.execute_script("window.open('{}');".format(href))
         time.sleep(1)
 
+    for i, link in enumerate(links):
+        windows = driver.window_handles
+        driver.switch_to.window(windows[-1])
+        time.sleep(2)
+        driver.close()
+    driver.switch_to.window(base_window)
+
 
 
 
