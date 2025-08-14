@@ -1,6 +1,6 @@
 import pickle
 import time
-
+import project_db
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -50,6 +50,8 @@ def scrape_autoscout(driver):
         driver.switch_to.window(windows[-1])
         time.sleep(10)
 
+        url = driver.current_url
+
         title_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
         title = title_element.text
 
@@ -77,7 +79,7 @@ def scrape_autoscout(driver):
         milage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
         milage = milage_element.text
 
-        print(title + ' ' + model_ver + ' ' + price + ' ' + year + ' ' + location + ' ' + milage + ' ' + fuel + ' ' + power + ' ' + gearbox)
+        project_db.add_to_db(url)
         driver.close()
     driver.switch_to.window(base_window)
 
