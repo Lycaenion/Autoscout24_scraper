@@ -1,7 +1,9 @@
 from datetime import date
 
+import sqlite3
+
 from sqlalchemy import (
-    BigInteger, String, create_engine
+    String, create_engine, select, delete
 )
 from sqlalchemy.orm import (
     DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, Session
@@ -34,16 +36,28 @@ def add_to_db(url, brand, model_version, year, price, milage, gearbox, fuel_type
     engine = create_engine(SQLALCHEMY_URI, echo=True, echo_pool='debug')
     Base.metadata.create_all(engine)
 
+    in_db = check_if_post_exists_in_db(url, engine)
+
+    if in_db is False:
+
+        with Session(engine) as session:
+            date_added = date.today().isoformat()
+
+            advert = Advertisements(url, brand, model_version, year, price,milage, gearbox, fuel_type, engine_power, location, date_added)
+            session.add(advert)
+            session.commit()
+            print('added advertisement')
+
+def check_if_post_exists_in_db(url, engine):
     with Session(engine) as session:
-        date_added = date.today().isoformat()
-
-        advert = Advertisements(url, brand, model_version, year, price,milage, gearbox, fuel_type, engine_power, location, date_added)
-        session.add(advert)
-        session.commit()
-        print('added advertisement')
-
-
-
+        stmt = select(Advertisements).where(Advertisements.url == url)
+        result = session.execute(stmt).scalar()
+        if result is None:
+            print('no advertisement')
+            return False
+        else:
+            print('found advertisement')
+            return True
 
 if __name__ == '__main__':
     SQLALCHEMY_URI = 'sqlite:///db.sqlite'

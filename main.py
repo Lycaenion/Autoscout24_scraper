@@ -108,10 +108,5 @@ def scrape_autoscout(driver):
         driver.close()
     driver.switch_to.window(base_window)
 
-
-
-
-
-
 if __name__ == "__main__":
     main()
