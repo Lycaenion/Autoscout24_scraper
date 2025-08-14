@@ -1,5 +1,8 @@
 import pickle
 import time
+
+from selenium.common import NoSuchElementException
+
 import project_db
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -48,12 +51,12 @@ def scrape_autoscout(driver):
     for i, link in enumerate(links):
         windows = driver.window_handles
         driver.switch_to.window(windows[-1])
-        time.sleep(10)
+        time.sleep(8)
 
         url = driver.current_url
 
-        title_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
-        title = title_element.text
+        brand_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
+        brand = brand_element.text
 
         model_ver_element = driver.find_element(By.CLASS_NAME, 'StageTitle_modelVersion__Yof2Z')
         model_ver = model_ver_element.text
@@ -64,22 +67,29 @@ def scrape_autoscout(driver):
         year_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]')
         year = year_element.text
 
-        location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
-        location = location_element.text
+        try:
+            location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
+        except NoSuchElementException:
+            location_element = None
+
+        if location_element is not None:
+            location = location_element.text
+        else:
+            location = None
 
         fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
         fuel = fuel_element.text
 
-        power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
-        power = power_element.text
+        engine_power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
+        engine_power = engine_power_element.text
 
-        gearbox_element = driver.find_element(By.XPATH, '//*[@id="__next"]/div/div/main/div[3]/div[3]/div/div[2]/div[4]')
+        gearbox_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[2]')
         gearbox = gearbox_element.text
 
         milage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
         milage = milage_element.text
 
-        project_db.add_to_db(url)
+        project_db.add_to_db(url, brand, model_ver, year, price, milage, gearbox, fuel, engine_power, location)
         driver.close()
     driver.switch_to.window(base_window)
 
