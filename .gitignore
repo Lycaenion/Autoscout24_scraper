@@ -5,6 +5,10 @@ __pycache__/
 
 #pycharm settings
 .idea/
+#database
+db.sqlite
+#html to check if element is present
+page.html
 
 # C extensions
 *.so

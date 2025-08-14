@@ -1,6 +1,10 @@
 import pickle
 import time
 
+from selenium.common import NoSuchElementException
+from selenium.webdriver.support.wait import WebDriverWait
+
+import project_db
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -23,7 +27,7 @@ def load_cookies(driver,filename):
 def main():
     driver = webdriver.Chrome()
     driver.get(AUTOSCOUT24_URL)
-    driver.implicitly_wait(20)
+    driver.implicitly_wait(45)
     driver.find_element(By.XPATH, '//*[@id="as24-cmp-popup"]/div/div[3]/button[2]').click()
     #save_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
     load_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
@@ -48,10 +52,15 @@ def scrape_autoscout(driver):
     for i, link in enumerate(links):
         windows = driver.window_handles
         driver.switch_to.window(windows[-1])
-        time.sleep(10)
+        WebDriverWait(driver, 30).until(
+            lambda d: d.execute_script("return document.readyState") == 'complete'
+        )
+        #time.sleep(8)
 
-        title_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
-        title = title_element.text
+        url = driver.current_url
+
+        brand_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
+        brand = brand_element.text
 
         model_ver_element = driver.find_element(By.CLASS_NAME, 'StageTitle_modelVersion__Yof2Z')
         model_ver = model_ver_element.text
@@ -62,22 +71,40 @@ def scrape_autoscout(driver):
         year_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]')
         year = year_element.text
 
-        location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
-        location = location_element.text
+        try:
+            location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
+        except NoSuchElementException:
+            location_element = None
+            with open('page.html', 'w', encoding='utf-8') as file:
+                file.write(driver.page_source)
 
-        fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
-        fuel = fuel_element.text
+        if location_element is not None:
+            location = location_element.text
+        else:
+            location = None
 
-        power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
-        power = power_element.text
+        try:
+            fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
+        except NoSuchElementException:
+            fuel_element = None
+            with open('page.html', 'w', encoding='utf-8') as file:
+                file.write(driver.page_source)
 
-        gearbox_element = driver.find_element(By.XPATH, '//*[@id="__next"]/div/div/main/div[3]/div[3]/div/div[2]/div[4]')
+        if fuel_element is not None:
+            fuel = fuel_element.text
+        else:
+            fuel = None
+
+        engine_power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
+        engine_power = engine_power_element.text
+
+        gearbox_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[2]')
         gearbox = gearbox_element.text
 
         milage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
         milage = milage_element.text
 
-        print(title + ' ' + model_ver + ' ' + price + ' ' + year + ' ' + location + ' ' + milage + ' ' + fuel + ' ' + power + ' ' + gearbox)
+        project_db.add_to_db(url, brand, model_ver, year, price, milage, gearbox, fuel, engine_power, location)
         driver.close()
     driver.switch_to.window(base_window)
 
