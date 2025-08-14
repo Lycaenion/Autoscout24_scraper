@@ -2,6 +2,7 @@ import pickle
 import time
 
 from selenium.common import NoSuchElementException
+from selenium.webdriver.support.wait import WebDriverWait
 
 import project_db
 from selenium import webdriver
@@ -26,7 +27,7 @@ def load_cookies(driver,filename):
 def main():
     driver = webdriver.Chrome()
     driver.get(AUTOSCOUT24_URL)
-    driver.implicitly_wait(20)
+    driver.implicitly_wait(45)
     driver.find_element(By.XPATH, '//*[@id="as24-cmp-popup"]/div/div[3]/button[2]').click()
     #save_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
     load_cookies(driver, AUTOSCOUT24_COOKIES_FILE)
@@ -51,7 +52,10 @@ def scrape_autoscout(driver):
     for i, link in enumerate(links):
         windows = driver.window_handles
         driver.switch_to.window(windows[-1])
-        time.sleep(8)
+        WebDriverWait(driver, 30).until(
+            lambda d: d.execute_script("return document.readyState") == 'complete'
+        )
+        #time.sleep(8)
 
         url = driver.current_url
 
@@ -71,14 +75,25 @@ def scrape_autoscout(driver):
             location_element = driver.find_element(By.XPATH, '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
         except NoSuchElementException:
             location_element = None
+            with open('page.html', 'w', encoding='utf-8') as file:
+                file.write(driver.page_source)
 
         if location_element is not None:
             location = location_element.text
         else:
             location = None
 
-        fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
-        fuel = fuel_element.text
+        try:
+            fuel_element = driver.find_element(By.XPATH, '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
+        except NoSuchElementException:
+            fuel_element = None
+            with open('page.html', 'w', encoding='utf-8') as file:
+                file.write(driver.page_source)
+
+        if fuel_element is not None:
+            fuel = fuel_element.text
+        else:
+            fuel = None
 
         engine_power_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]')
         engine_power = engine_power_element.text
