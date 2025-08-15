@@ -3,23 +3,34 @@ from datetime import date
 import sqlite3
 
 from sqlalchemy import (
-    String, create_engine, select, delete
+    String, create_engine, select, delete, ForeignKey
 )
 from sqlalchemy.orm import (
-    DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, Session
+    DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, Session, relationship, sessionmaker
 )
 
 
 class Base(MappedAsDataclass, DeclarativeBase):
     """Subclasses will be converted into dataclasses"""
 
+class Webpages(Base):
+    """Webpages"""
+    __tablename__ = "Webpages"
+    __table_args__ = {'sqlite_autoincrement': True}
+
+    id : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
+    site_name : Mapped[str] = mapped_column(String(50), nullable=False)
+    advertisements : Mapped[int] = relationship('Advertisement', back_populates='Webpages')
+
 class Advertisements(Base):
 
     __tablename__ = 'Advertisements'
     __table_args__ = {'sqlite_autoincrement': True}
 
+
     id : Mapped[int]= mapped_column(init=False, primary_key=True, autoincrement=True)
     url : Mapped[str]= mapped_column(String(300),nullable=False, unique=True)
+    webpage_id : Mapped[int] = mapped_column(ForeignKey('Webpages.id'), nullable=False)
     brand: Mapped[str]= mapped_column(String(100),nullable=False)
     model_version: Mapped[str]= mapped_column(String(100),nullable=True)
     year: Mapped[str]= mapped_column(String(100),nullable=True)
@@ -31,24 +42,24 @@ class Advertisements(Base):
     location: Mapped[str]= mapped_column(String(100),nullable=True)
     date_added: Mapped[str]= mapped_column(String(100),default=None, nullable=False, comment='date added to db')
 
+
 def add_to_db(url, brand, model_version, year, price, milage, gearbox, fuel_type, engine_power, location):
     SQLALCHEMY_URI = 'sqlite:///db.sqlite'
     engine = create_engine(SQLALCHEMY_URI, echo=True, echo_pool='debug')
     Base.metadata.create_all(engine)
 
-    in_db = check_if_post_exists_in_db(url, engine)
+    with Session(engine) as session:
+        date_added = date.today().isoformat()
 
-    if in_db is False:
+        advert = Advertisements(url, brand, model_version, year, price,milage, gearbox, fuel_type, engine_power, location, date_added)
+        session.add(advert)
+        session.commit()
+        print('added advertisement')
 
-        with Session(engine) as session:
-            date_added = date.today().isoformat()
+def check_if_post_exists_in_db(url):
+    SQLALCHEMY_URI = 'sqlite:///db.sqlite'
+    engine = create_engine(SQLALCHEMY_URI, echo=True, echo_pool='debug')
 
-            advert = Advertisements(url, brand, model_version, year, price,milage, gearbox, fuel_type, engine_power, location, date_added)
-            session.add(advert)
-            session.commit()
-            print('added advertisement')
-
-def check_if_post_exists_in_db(url, engine):
     with Session(engine) as session:
         stmt = select(Advertisements).where(Advertisements.url == url)
         result = session.execute(stmt).scalar()
@@ -63,3 +74,5 @@ if __name__ == '__main__':
     SQLALCHEMY_URI = 'sqlite:///db.sqlite'
     engine = create_engine(SQLALCHEMY_URI, echo=True, echo_pool='debug')
     Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
