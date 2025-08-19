@@ -63,6 +63,9 @@ def scrape_autoscout(driver):
 
         if result is False:
 
+            webpage = 1
+            print(webpage)
+
             brand_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
             brand = brand_element.text
 
@@ -105,10 +108,10 @@ def scrape_autoscout(driver):
             gearbox_element = driver.find_element(By.XPATH, '//*[@id="technical-details-section"]/div/div[2]/dl/dd[2]')
             gearbox = gearbox_element.text
 
-            milage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
-            milage = milage_element.text
+            mileage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
+            mileage = mileage_element.text
 
-            project_db.add_to_db(url, brand, model_ver, year, price, milage, gearbox, fuel, engine_power, location)
+            project_db.add_to_db(url,webpage, brand, model_ver, year, price, mileage, gearbox, fuel, engine_power, location)
             driver.close()
             driver.switch_to.window(base_window)
         else:
