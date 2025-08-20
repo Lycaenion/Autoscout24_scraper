@@ -57,12 +57,14 @@ def scrape_autoscout(driver):
         )
 
         url = driver.current_url
+        if 'autoscout24' in url:
+            webpage = 'Autoscout24'
+        else:
+            print('error')
 
         result = project_db.check_if_post_exists_in_db(url)
 
         if result is False:
-            webpage = 1
-            print(webpage)
 
             brand_element = driver.find_element(By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP')
             brand = brand_element.text
