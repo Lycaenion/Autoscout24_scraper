@@ -55,14 +55,12 @@ def scrape_autoscout(driver):
         WebDriverWait(driver, 30).until(
             lambda d: d.execute_script("return document.readyState") == 'complete'
         )
-        #time.sleep(8)
 
         url = driver.current_url
 
         result = project_db.check_if_post_exists_in_db(url)
 
         if result is False:
-
             webpage = 1
             print(webpage)
 
@@ -73,7 +71,21 @@ def scrape_autoscout(driver):
             model_ver = model_ver_element.text
 
             price_element = driver.find_element(By.CLASS_NAME, 'PriceInfo_price__XU0aF')
-            price = price_element.text
+            temp_price = price_element.text
+
+            if len(temp_price) > 8:
+                price = temp_price[:-1]
+                price = price.strip('€')
+                price = price.replace(' ', '')
+                price = price.replace(',', '')
+                int_price = int(price)
+            else:
+                price = temp_price
+                price = price.strip('€')
+                price = price.replace(' ', '')
+                price = price.replace(',', '')
+                int_price = int(price)
+
 
             year_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]')
             year = year_element.text
@@ -111,7 +123,7 @@ def scrape_autoscout(driver):
             mileage_element = driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div')
             mileage = mileage_element.text
 
-            project_db.add_to_db(url,webpage, brand, model_ver, year, price, mileage, gearbox, fuel, engine_power, location)
+            project_db.add_to_db(url,webpage, brand, model_ver, year, int_price, mileage, gearbox, fuel, engine_power, location)
             driver.close()
             driver.switch_to.window(base_window)
         else:
