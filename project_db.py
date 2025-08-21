@@ -2,6 +2,7 @@ from datetime import date
 
 import sqlite3
 
+import sqlalchemy.exc
 from sqlalchemy import (
     String, create_engine, select, delete, ForeignKey, Integer
 )
@@ -42,8 +43,8 @@ class Advertisement(Base):
     webpage : Mapped[Webpage] = relationship(back_populates='advertisements')
     brand: Mapped[str]= mapped_column(String(100),nullable=False)
     model_version: Mapped[str]= mapped_column(String(100),nullable=True)
-    year: Mapped[int]= mapped_column(nullable=True)
-    price: Mapped[str]= mapped_column(String(100),nullable=True)
+    year: Mapped[str]= mapped_column(String(20), nullable=True)
+    price: Mapped[int]= mapped_column(String(100),nullable=True)
     mileage: Mapped[str]= mapped_column(String(100), nullable=True)
     gearbox: Mapped[str]= mapped_column(String(100),nullable=True)
     fuel_type: Mapped[str]= mapped_column(String(100),nullable=True)
@@ -54,34 +55,49 @@ class Advertisement(Base):
 #Create tables
 Base.metadata.create_all(bind=engine)
 
-def add_to_db(url, webpage_name, brand, model_version, year, price, mileage, gearbox, fuel_type, engine_power, location):
+def add_to_db(url: str,
+              webpage_name: str,
+              brand: str,
+              model_version: str,
+              year: str,
+              price: int,
+              mileage: str,
+              gearbox: str,
+              fuel_type: str,
+              engine_power: str,
+              location: str) -> None:
 
-    with Session() as session:
-        date_added = date.today().isoformat()
+    try:
+        with Session() as session:
+            date_added = date.today().isoformat()
 
-        webpage = session.query(Webpage).filter_by(site_name=webpage_name).first()
-        if not webpage:
-            print(f'webpage not found: {webpage_name}')
-            return
+            webpage = session.query(Webpage).filter_by(site_name=webpage_name).first()
+            if not webpage:
+                print(f'webpage not found: {webpage_name}')
+                return
 
-        ad = Advertisement(
-            url=url,
-            webpage_id=webpage.id,      #Foreign key column
-            webpage=webpage,            #Relationship object to avoid TypError
-            brand=brand,
-            model_version=model_version,
-            year=year,
-            price=price,
-            mileage=mileage,
-            gearbox=gearbox,
-            fuel_type=fuel_type,
-            engine_power=engine_power,
-            location=location,
-            date_added=date_added
-        )
-        session.add(ad)
-        session.commit()
-        print('added advertisement')
+            ad = Advertisement(
+                url=url,
+                webpage_id=webpage.id,      #Foreign key column
+                webpage=webpage,            #Relationship object to avoid TypError
+                brand=brand,
+                model_version=model_version,
+                year=year,
+                price=price,
+                mileage=mileage,
+                gearbox=gearbox,
+                fuel_type=fuel_type,
+                engine_power=engine_power,
+                location=location,
+                date_added=date_added
+            )
+            session.add(ad)
+            print(f'advertisement added: {ad}')
+            session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        print("Duplicate entry or constraint violation. Skipping this advertisement.")
+    except Exception as e:
+        print(f"Error while adding to database: {e}")
 
 def check_if_post_exists_in_db(url):
     with Session() as session:

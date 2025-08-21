@@ -84,19 +84,32 @@ class Autoscout24Scraper:
             brand = wait.until(EC.presence_of_element_located(
                 (By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP'))).text
             model_ver = self.driver.find_element(By.CLASS_NAME, 'StageTitle_modelVersion__Yof2Z').text
-
             price_text = self.driver.find_element(By.CLASS_NAME, 'PriceInfo_price__XU0aF').text
             price = int(price_text.strip('€').replace(' ', '').replace(',', ''))
 
-            year = self.driver.find_element(By.CSS_SELECTOR, '.VechicleHistory_container__sYG8k dd:nth-child(4)').text
-            location = self._safe_find_element_class('SellerInfo_address__sYbQR').text
-            fuel = self._safe_find_element_class('EnvironmentDetails_container__zqZOI dd:nth-child(4)').text
-            engine_power = self.driver.find_element(By.CSS_SELECTOR,
-                                                    '.TechnicalDetails_container__rR3iz dd:nth-child(2)').text
-            gearbox = self.driver.find_element(By.CSS_SELECTOR,
-                                               '.TechnicalDetails_container__rR3iz dd:nth-child(4)').text
-            mileage = self.driver.find_element(By.CSS_SELECTOR,
-                                               '.VehicleHistory_container__sYG8k dd:first-child div').text
+            year = self.driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]').text
+
+            try:
+                location_element = driver.find_element(By.XPATH,
+                                                       '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
+            except NoSuchElementException:
+                location_element = None
+                with open('page.html', 'w', encoding='utf-8') as file:
+                    file.write(driver.page_source)
+            if location_element is not None:
+                location = location_element.text
+            else:
+                location = None
+            try:
+                fuel_element = driver.find_element(By.XPATH,
+                                                   '//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
+            except NoSuchElementException:
+                fuel_element = None
+                with open('page.html', 'w', encoding='utf-8') as file:
+                    file.write(driver.page_source)
+            engine_power = self.driver.find_element(By.CSS_SELECTOR,'.TechnicalDetails_container__rR3iz dd:nth-child(2)').text
+            gearbox = self.driver.find_element(By.CSS_SELECTOR,'.TechnicalDetails_container__rR3iz dd:nth-child(4)').text
+            mileage = self.driver.find_element(By.CSS_SELECTOR,'.VehicleHistory_container__sYG8k dd:first-child div').text
 
             return CarData(
                 url=self.driver.current_url,
@@ -117,6 +130,13 @@ class Autoscout24Scraper:
     def _safe_find_element(self, xpath: str) -> Optional[str]:
         try:
             element = self.driver.find_element(By.XPATH, xpath)
+            return element.text
+        except NoSuchElementException:
+            return None
+
+    def _safe_find_element_class(self, selector: str) -> Optional[str]:
+        try:
+            element = self.driver.find_element(By.CSS_SELECTOR, selector)
             return element.text
         except NoSuchElementException:
             return None
