@@ -7,6 +7,7 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 
 import project_db
 
@@ -36,17 +37,37 @@ class Autoscout24Scraper:
         self.base_window = None
 
     def setup_driver(self):
-        self.driver = webdriver.Chrome()
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(options=options)
         self.driver.get(self.url)
 
-        cookie_button = WebDriverWait(self.driver, 20).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="as24-cmp-popup"]/div/div[3]/button[2]'))
-        )
-        cookie_button.click()
+        try:
+            selectors = [
+                (By.CLASS_NAME, 'sc-btn-primary'),
+                (By.CLASS_NAME, 'privacy-consent-accept'),
+                (By.CSS_SELECTOR, '[data-testid="consent-button"]'),
+                (By.XPATH, '//button[contains(text(), "Accept All")]'),
+            ]
 
-        self.load_cookies()
-        self.driver.refresh()
-        self.base_window = self.driver.window_handles[0]
+            for by, selector in selectors:
+                try:
+                    cookie_button = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((by, selector))
+                    )
+                    cookie_button.click()
+                    break
+                except:
+                    continue
+
+            self.load_cookies()
+            self.driver.refresh()
+            self.base_window = self.driver.window_handles[0]
+        except Exception as e:
+            print(f"Error setting up driver: {e}")
+            self.driver.quit()
+            raise
 
     def load_cookies(self):
         try:
@@ -67,18 +88,15 @@ class Autoscout24Scraper:
             price_text = self.driver.find_element(By.CLASS_NAME, 'PriceInfo_price__XU0aF').text
             price = int(price_text.strip('€').replace(' ', '').replace(',', ''))
 
-            year = self.driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]').text
-
-            location = self._safe_find_element(
-                '//*[@id="vendor-and-cta-section"]/div/div[1]/div/div[2]/div[1]/div[2]/div[2]/a')
-            fuel = self._safe_find_element('//*[@id="environment-details-section"]/div/div[2]/dl/dd[2]')
-
-            engine_power = self.driver.find_element(By.XPATH,
-                                                    '//*[@id="technical-details-section"]/div/div[2]/dl/dd[1]').text
-            gearbox = self.driver.find_element(By.XPATH,
-                                               '//*[@id="technical-details-section"]/div/div[2]/dl/dd[2]').text
-            mileage = self.driver.find_element(By.XPATH,
-                                               '//*[@id="listing-history-section"]/div/div[2]/dl/dd[1]/div').text
+            year = self.driver.find_element(By.CSS_SELECTOR, '.VechicleHistory_container__sYG8k dd:nth-child(4)').text
+            location = self._safe_find_element_class('SellerInfo_address__sYbQR').text
+            fuel = self._safe_find_element_class('EnvironmentDetails_container__zqZOI dd:nth-child(4)').text
+            engine_power = self.driver.find_element(By.CSS_SELECTOR,
+                                                    '.TechnicalDetails_container__rR3iz dd:nth-child(2)').text
+            gearbox = self.driver.find_element(By.CSS_SELECTOR,
+                                               '.TechnicalDetails_container__rR3iz dd:nth-child(4)').text
+            mileage = self.driver.find_element(By.CSS_SELECTOR,
+                                               '.VehicleHistory_container__sYG8k dd:first-child div').text
 
             return CarData(
                 url=self.driver.current_url,
