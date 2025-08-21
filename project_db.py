@@ -95,8 +95,8 @@ def check_if_post_exists_in_db(url):
             return True
 
 if __name__ == '__main__':
-    webpage1 = Webpage(site_name='Autoscout24', url='https://autoscout24.com' )
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    session.add(webpage1)
-    session.commit()
+    webpage1 = Webpage(site_name='Autovia', url='https://www.autovia.sk/' )
+
+    with Session() as session:
+        session.add(webpage1)
+        session.commit()
