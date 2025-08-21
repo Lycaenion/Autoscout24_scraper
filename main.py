@@ -85,6 +85,8 @@ class Autoscout24Scraper:
                 (By.CLASS_NAME, 'StageTitle_makeModelContainer__RyjBP'))).text
             model_ver = self.driver.find_element(By.CLASS_NAME, 'StageTitle_modelVersion__Yof2Z').text
             price_text = self.driver.find_element(By.CLASS_NAME, 'PriceInfo_price__XU0aF').text
+            if len(price_text) > 8:
+                price_text = price_text[:-1]
             price = int(price_text.strip('€').replace(' ', '').replace(',', ''))
 
             year = self.driver.find_element(By.XPATH, '//*[@id="listing-history-section"]/div/div[2]/dl/dd[2]').text

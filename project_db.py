@@ -111,7 +111,7 @@ def check_if_post_exists_in_db(url):
             return True
 
 if __name__ == '__main__':
-    webpage1 = Webpage(site_name='Autovia', url='https://www.autovia.sk/' )
+    webpage1 = Webpage(site_name='Autoscout24', url='https://www.autoscout.com' )
 
     with Session() as session:
         session.add(webpage1)
